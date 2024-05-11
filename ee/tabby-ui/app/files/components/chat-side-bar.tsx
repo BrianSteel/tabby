@@ -1,4 +1,5 @@
 import React from 'react'
+import { useClient } from 'tabby-chat-panel/react'
 
 import { useStore } from '@/lib/hooks/use-store'
 import { useChatStore } from '@/lib/stores/chat-store'
@@ -21,6 +22,7 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
   )
   const activeChatId = useStore(useChatStore, state => state.activeChatId)
   const iframeRef = React.useRef<HTMLIFrameElement>(null)
+  const client = useClient(iframeRef)
 
   const getPrompt = ({
     action,
@@ -50,14 +52,21 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
     return `${builtInPrompt}\n${'```'}${codeBlockMeta}\n${code}\n${'```'}\n`
   }
 
+  client?.init({
+    fetcherOptions: {
+      authorization: 'auth-token'
+    }
+  })
+
   React.useEffect(() => {
     const contentWindow = iframeRef.current?.contentWindow
 
     if (pendingEvent) {
-      contentWindow?.postMessage({
-        action: 'append',
-        payload: getPrompt(pendingEvent)
-      })
+      console.log('pendingEvent', pendingEvent, getPrompt(pendingEvent))
+      // contentWindow?.postMessage({
+      //   action: 'append',
+      //   payload: getPrompt(pendingEvent)
+      // })
       setPendingEvent(undefined)
     }
   }, [pendingEvent, iframeRef.current?.contentWindow])
@@ -66,7 +75,7 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
     <div className={cn('flex h-full flex-col', className)} {...props}>
       <Header />
       <iframe
-        src={`/playground`}
+        src={`/chat`}
         className="w-full flex-1 border-0"
         key={activeChatId}
         ref={iframeRef}
