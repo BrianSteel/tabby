@@ -3,6 +3,7 @@ import type { ChatMessage } from 'tabby-chat-panel'
 import { useClient } from 'tabby-chat-panel/react'
 
 import { useStore } from '@/lib/hooks/use-store'
+import { useMe } from '@/lib/hooks/use-me'
 import { useChatStore } from '@/lib/stores/chat-store'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,6 @@ import { IconClose } from '@/components/ui/icons'
 
 import { QuickActionEventPayload } from '../lib/event-emitter'
 import { SourceCodeBrowserContext } from './source-code-browser'
-import { start } from 'repl'
 
 interface ChatSideBarProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {}
@@ -19,6 +19,7 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
   className,
   ...props
 }) => {
+  const [{ data }] = useMe()
   const { pendingEvent, setPendingEvent } = React.useContext(
     SourceCodeBrowserContext
   )
@@ -62,14 +63,14 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
   }
 
   React.useEffect(() => {
-    if (iframeRef?.current) {
+    if (iframeRef?.current && data) {
       client?.init({
         fetcherOptions: {
-          authorization: 'auth-token'
+          authorization: data.me.authToken
         }
       })
     }
-  }, [iframeRef?.current, client])
+  }, [iframeRef?.current, client, data])
 
   React.useEffect(() => {
     if (pendingEvent && client) {
@@ -78,6 +79,8 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
       setPendingEvent(undefined)
     }
   }, [pendingEvent, client])
+
+  if (!data?.me) return <></>
 
   return (
     <div className={cn('flex h-full flex-col', className)} {...props}>
