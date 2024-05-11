@@ -25,9 +25,18 @@ export const MockChatPanel = forwardRef<ChatPanelHandler, ChatPanelProps>(({
 
   return (
     <div>
-      <h1>Init message</h1>
+      <h1>Initialized</h1>
       {messages.map((msg, index) => (
-        <p key={index}>{msg.message}</p>
+        <div key={index}>
+          <h1>MESSAGE</h1>
+          <p>{msg.message}</p>
+          {msg.selectContext &&
+            <>
+              <h3>SELECTED CONTEXT</h3>
+              <p>{JSON.stringify(msg.selectContext)}</p>
+            </>
+          }
+        </div>
       ))}
     </div>
   )

@@ -10,6 +10,7 @@ import { IconClose } from '@/components/ui/icons'
 
 import { QuickActionEventPayload } from '../lib/event-emitter'
 import { SourceCodeBrowserContext } from './source-code-browser'
+import { start } from 'repl'
 
 interface ChatSideBarProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {}
@@ -47,42 +48,36 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
       default:
         break
     }
-    const codeBlockMeta = `${
-      language ?? ''
-    } is_reference=1 path=${path} line_from=${lineFrom} line_to=${lineTo}`
-    // return `${builtInPrompt}\n${'```'}${codeBlockMeta}\n${code}\n${'```'}\n`
+    const range = lineFrom && { start: lineFrom, end: lineTo } || undefined
     return {
       message: `${builtInPrompt}\n${'```'}${language ?? ''}\n${code}\n${'```'}\n`,
       selectContext: {
         kind: 'file',
-        range: {
-          start: lineFrom,
-          end: lineTo
-        },
+        range,
         language,
-        path
+        // FIXME(wwayne): if path is undefined
+        path: path!
       }
     }
   }
 
-  client?.init({
-    fetcherOptions: {
-      authorization: 'auth-token'
+  React.useEffect(() => {
+    if (iframeRef?.current) {
+      client?.init({
+        fetcherOptions: {
+          authorization: 'auth-token'
+        }
+      })
     }
-  })
+  }, [iframeRef?.current, client])
 
   React.useEffect(() => {
-    const contentWindow = iframeRef.current?.contentWindow
-
-    if (pendingEvent) {
-      console.log('pendingEvent', pendingEvent, getPrompt(pendingEvent))
-      // contentWindow?.postMessage({
-      //   action: 'append',
-      //   payload: getPrompt(pendingEvent)
-      // })
+    if (pendingEvent && client) {
+      const chatMessage = getPrompt(pendingEvent)
+      client.sendMessage(chatMessage)
       setPendingEvent(undefined)
     }
-  }, [pendingEvent, iframeRef.current?.contentWindow])
+  }, [pendingEvent, client])
 
   return (
     <div className={cn('flex h-full flex-col', className)} {...props}>

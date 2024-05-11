@@ -13,24 +13,25 @@ export default function Chat () {
   let messageQueueBeforeInit: ChatMessage[] = [];
 
   const sendMessage = (message: ChatMessage) => {
-    if (!isInit) {
-      return messageQueueBeforeInit.push(message)
-    }
-
     if (chatPanelRef.current) {
       chatPanelRef.current.addMessage(message);
+    } else {
+      messageQueueBeforeInit.push(message)
     }
   }
 
   useServer({
     init: (request) => {
+      if (chatPanelRef.current) return
       setIsInit(true)
       setFetcherOptions(request.fetcherOptions)
 
       messageQueueBeforeInit.forEach(sendMessage)
       messageQueueBeforeInit = []
     },
-    sendMessage
+    sendMessage: (message: ChatMessage) => {
+      return sendMessage(message)
+    }
   })
 
   if (!isInit || !fetcherOptions) return <></>
