@@ -1,4 +1,5 @@
 import React from 'react'
+import type { ChatMessage } from 'tabby-chat-panel'
 import { useClient } from 'tabby-chat-panel/react'
 
 import { useStore } from '@/lib/hooks/use-store'
@@ -31,7 +32,7 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
     path,
     lineFrom,
     lineTo
-  }: QuickActionEventPayload) => {
+  }: QuickActionEventPayload): ChatMessage => {
     let builtInPrompt = ''
     switch (action) {
       case 'explain':
@@ -49,7 +50,19 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
     const codeBlockMeta = `${
       language ?? ''
     } is_reference=1 path=${path} line_from=${lineFrom} line_to=${lineTo}`
-    return `${builtInPrompt}\n${'```'}${codeBlockMeta}\n${code}\n${'```'}\n`
+    // return `${builtInPrompt}\n${'```'}${codeBlockMeta}\n${code}\n${'```'}\n`
+    return {
+      message: `${builtInPrompt}\n${'```'}${language ?? ''}\n${code}\n${'```'}\n`,
+      selectContext: {
+        kind: 'file',
+        range: {
+          start: lineFrom,
+          end: lineTo
+        },
+        language,
+        path
+      }
+    }
   }
 
   client?.init({
